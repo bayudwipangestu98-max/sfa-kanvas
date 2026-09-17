@@ -1,0 +1,16 @@
+[
+  {
+    "id": "S01",
+    "name": "Toko Tirta",
+    "owner": "Pak Tirta",
+    "area": "Argamakmur",
+    "phone": "08123456789"
+  },
+  {
+    "id": "S02",
+    "name": "Toko Berkah Jaya",
+    "owner": "Ibu Ani",
+    "area": "Ketahun",
+    "phone": "08523456789"
+  }
+]

@@ -1,0 +1,490 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SFA & Manajemen Distributor</title>
+    <style>
+        body { font-family: Arial, sans-serif; background: #f4f6f9; margin: 0; padding: 10px; }
+        .container { max-width: 680px; margin: auto; background: white; padding: 15px; border-radius: 12px; box-shadow: 0 4px 10px rgba(0,0,0,0.1); }
+        h2 { color: #1e293b; text-align: center; font-size: 18px; margin-bottom: 5px; }
+        .badge-sales { background: #dbeafe; color: #1e40af; padding: 4px 12px; border-radius: 20px; font-size: 11px; font-weight: bold; display: inline-block; margin-bottom: 5px; }
+        label { font-weight: bold; font-size: 12px; color: #475569; display: block; margin-top: 8px; }
+        input, select { width: 100%; padding: 8px; margin-top: 3px; border: 1px solid #cbd5e1; border-radius: 6px; box-sizing: border-box; font-size: 13px; }
+        button { width: 100%; background: #2563eb; color: white; border: none; padding: 10px; border-radius: 6px; font-weight: bold; margin-top: 10px; cursor: pointer; }
+        button:hover { background: #1d4ed8; }
+        .btn-success { background: #16a34a; }
+        .btn-success:hover { background: #15803d; }
+        .btn-secondary { background: #dc2626; }
+        .btn-warning { background: #d97706; color: white; }
+        .hidden { display: none; }
+        
+        .password-wrapper { position: relative; }
+        .password-wrapper input { padding-right: 40px; }
+        .toggle-password { position: absolute; right: 10px; top: 50%; transform: translateY(-50%); background: none; border: none; cursor: pointer; font-size: 16px; color: #64748b; padding: 0; width: auto; margin: 0; }
+
+        .nav-tabs { display: flex; gap: 5px; margin-bottom: 15px; flex-wrap: wrap; }
+        .nav-btn { flex: 1; padding: 8px 5px; background: #e2e8f0; border: none; border-radius: 6px; font-size: 11px; font-weight: bold; cursor: pointer; text-align: center; }
+        .nav-btn.active { background: #2563eb; color: white; }
+
+        table { width: 100%; border-collapse: collapse; margin-top: 8px; font-size: 11px; }
+        th, td { border: 1px solid #cbd5e1; padding: 6px; text-align: left; }
+        th { background: #f1f5f9; color: #334155; }
+        tr:nth-child(even) { background: #f8fafc; }
+        .alert { padding: 8px; text-align: center; font-size: 12px; font-weight: bold; margin-top: 10px; border-radius: 6px; }
+
+        @media print {
+            body * { visibility: hidden; }
+            #printArea, #printArea * { visibility: visible; }
+            #printArea { position: absolute; left: 0; top: 0; width: 100%; font-family: monospace; font-size: 12px; color: black; background: white; padding: 10px; }
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <!-- HALAMAN LOGIN -->
+    <div id="loginSection">
+        <h2>🔐 Login Sistem Distributor</h2>
+        <div style="text-align: center;"><span class="badge-sales">SALES TO / KANVAS</span></div>
+        <label>Username</label>
+        <input type="text" id="username" placeholder="sales01 atau admin">
+        
+        <label>PIN / Password</label>
+        <div class="password-wrapper">
+            <input type="password" id="pin" placeholder="Masukkan PIN">
+            <button type="button" class="toggle-password" onclick="togglePasswordVisibility()">👁️</button>
+        </div>
+
+        <button onclick="handleLogin()">Masuk</button>
+        <div id="loginStatus" class="alert"></div>
+        <p style="font-size: 11px; color: #64748b; text-align: center; margin-top: 15px;">
+            Sales: <b>sales01</b> (1234) | Admin: <b>admin</b> (admin123)
+        </p>
+    </div>
+
+    <!-- UTAMA APLIKASI -->
+    <div id="appSection" class="hidden">
+        <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #e2e8f0; padding-bottom: 8px; margin-bottom: 10px;">
+            <div>
+                <span class="badge-sales">SALES TO / KANVAS</span>
+            </div>
+            <button onclick="handleLogout()" style="width: auto; padding: 4px 10px; background: #dc2626; font-size: 11px; margin:0;">Keluar</button>
+        </div>
+
+        <div class="nav-tabs" id="navTabsContainer"></div>
+
+        <!-- 1. MENU: INPUT PESANAN -->
+        <div id="menuOrder" class="menu-content">
+            <h3 style="font-size: 14px; color: #1e293b; margin: 5px 0;">📝 Form Input Pesanan & Kunjungan</h3>
+            <label>Pilih Toko Pelanggan</label>
+            <select id="orderStore"></select>
+
+            <label>Lokasi Koordinat GPS Toko</label>
+            <div style="display: flex; gap: 5px; margin-top: 3px;">
+                <input type="text" id="gpsCoord" placeholder="Klik tombol di samping untuk ambil GPS" readonly style="background: #f1f5f9;">
+                <button type="button" class="btn-warning" onclick="getGeoLocation()" style="width: auto; margin-top:0; padding: 0 10px; font-size: 11px;">📍 Ambil GPS</button>
+            </div>
+
+            <label>Foto Toko / Bukti Kunjungan</label>
+            <input type="file" id="storePhotoInput" accept="image/*" capture="environment" onchange="previewPhoto(event)" style="padding: 5px;">
+            <div id="photoPreviewContainer" style="margin-top: 5px; text-align: center;"></div>
+
+            <label>Pilih Produk (Stok, Satuan, & Harga)</label>
+            <select id="orderProduct" onchange="updateSubtotal()"></select>
+            <label>Jumlah Pesanan (Dus)</label>
+            <input type="number" id="orderQty" value="1" min="1" oninput="updateSubtotal()">
+            <div id="priceInfo" style="font-size: 12px; color: #2563eb; margin-top: 8px; font-weight: bold;">Estimasi Total: Rp 0</div>
+            
+            <label>Metode Pembayaran</label>
+            <select id="orderPayment">
+                <option value="CASH">Cash / Lunas di Tempat</option>
+                <option value="TEMPO_7_HARI">Tempo 7 Hari (Piutang)</option>
+            </select>
+            
+            <button onclick="submitOrder(false)">Simpan ke Server Kantor</button>
+            <button class="btn-success" onclick="submitOrder(true)">🖨️ Simpan & Cetak Struk Thermal</button>
+            <div id="orderStatus"></div>
+        </div>
+
+        <!-- 2. MENU: INVENTORY STOK -->
+        <div id="menuStock" class="menu-content hidden">
+            <h3 style="font-size: 14px; color: #1e293b; margin: 5px 0;">📦 Inventory Stok Gudang / Mobil</h3>
+            <div id="stockTableDiv">Memuat data...</div>
+        </div>
+
+        <!-- 3. MENU: PENAGIHAN -->
+        <div id="menuInvoices" class="menu-content hidden">
+            <h3 style="font-size: 14px; color: #1e293b; margin: 5px 0;">💰 Daftar Tagihan Piutang & Pelunasan</h3>
+            <button onclick="loadInvoices()" style="padding: 6px; font-size: 12px; margin-bottom: 8px;">🔄 Refresh Tagihan</button>
+            <div id="invoicesTableDiv">Memuat data...</div>
+        </div>
+
+        <!-- 4. MENU: DAFTAR TOKO -->
+        <div id="menuStores" class="menu-content hidden">
+            <h3 style="font-size: 14px; color: #1e293b; margin: 5px 0;">🏪 Daftar Toko Pelanggan</h3>
+            <div id="storesTableDiv">Memuat data...</div>
+            <div style="margin-top: 15px; background: #f8fafc; padding: 10px; border-radius: 6px; border: 1px solid #e2e8f0;">
+                <h4 style="font-size: 12px; margin: 0 0 5px 0;">➕ Tambah Toko Baru (Lengkap NIK, No HP, & NPWP)</h4>
+                <input type="text" id="newStoreName" placeholder="Nama Toko">
+                <input type="text" id="newStoreOwner" placeholder="Nama Pemilik">
+                <input type="text" id="newStoreNik" placeholder="NIK Pemilik (16 Digit)">
+                <input type="text" id="newStorePhone" placeholder="Nomor HP / WhatsApp">
+                <input type="text" id="newStoreNpwp" placeholder="Nomor NPWP (Opsional)">
+                <input type="text" id="newStoreArea" placeholder="Wilayah (Contoh: Argamakmur)">
+                <button onclick="addNewStore()" style="margin-top: 8px; background: #16a34a;">Simpan Toko Baru</button>
+            </div>
+        </div>
+
+        <!-- 5. MENU: PROGRAM DISKON -->
+        <div id="menuDiscounts" class="menu-content hidden">
+            <h3 style="font-size: 14px; color: #1e293b; margin: 5px 0;">🎁 Program Diskon & Promo Aktif</h3>
+            <div id="discountsTableDiv">Memuat data...</div>
+        </div>
+    </div>
+</div>
+
+<div id="printArea" class="hidden"></div>
+
+<script>
+    let currentUser = null;
+    let productsData = [];
+    let capturedPhotoBase64 = "";
+
+    function togglePasswordVisibility() {
+        const pinInput = document.getElementById('pin');
+        const toggleBtn = document.querySelector('.toggle-password');
+        if (pinInput.type === 'password') {
+            pinInput.type = 'text';
+            toggleBtn.innerText = '🙈';
+        } else {
+            pinInput.type = 'password';
+            toggleBtn.innerText = '👁️';
+        }
+    }
+
+    function getGeoLocation() {
+        const gpsInput = document.getElementById('gpsCoord');
+        if (navigator.geolocation) {
+            gpsInput.value = "Mencari sinyal GPS...";
+            navigator.geolocation.getCurrentPosition(
+                (position) => {
+                    const lat = position.coords.latitude;
+                    const lng = position.coords.longitude;
+                    gpsInput.value = `${lat.toFixed(6)}, ${lng.toFixed(6)}`;
+                },
+                (error) => {
+                    alert("Gagal mendeteksi GPS.");
+                    gpsInput.value = "GPS Gagal";
+                },
+                { enableHighAccuracy: true }
+            );
+        } else {
+            alert("Browser tidak Mendukung GPS.");
+        }
+    }
+
+    function previewPhoto(event) {
+        const file = event.target.files[0];
+        if (file) {
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                capturedPhotoBase64 = e.target.result;
+                document.getElementById('photoPreviewContainer').innerHTML = `
+                    <img src="${capturedPhotoBase64}" style="max-width: 100%; max-height: 120px; border-radius: 6px; border: 1px solid #cbd5e1; margin-top: 5px;">
+                    <br><small style="color: green; font-weight: bold;">✔ Foto Toko Siap</small>
+                `;
+            };
+            reader.readAsDataURL(file);
+        }
+    }
+
+    async function handleLogin() {
+        const username = document.getElementById('username').value;
+        const pin = document.getElementById('pin').value;
+        const statusDiv = document.getElementById('loginStatus');
+
+        try {
+            const res = await fetch('http://127.0.0.1:5000/api/login', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ username, pin })
+            });
+            const result = await res.json();
+            if (result.success) {
+                currentUser = result;
+                document.getElementById('loginSection').classList.add('hidden');
+                document.getElementById('appSection').classList.remove('hidden');
+                
+                setupNavigation(result.role);
+                loadAppData();
+            } else {
+                statusDiv.style.color = "red";
+                statusDiv.innerText = result.error;
+            }
+        } catch (e) {
+            statusDiv.style.color = "red";
+            statusDiv.innerText = "Gagal terhubung ke server!";
+        }
+    }
+
+    function setupNavigation(role) {
+        const container = document.getElementById('navTabsContainer');
+        let html = `<button class="nav-btn active" onclick="switchMenu('menuOrder', this)">Input Order</button>`;
+        html += `<button class="nav-btn" onclick="switchMenu('menuStock', this)">Inventory Stok</button>`;
+        html += `<button class="nav-btn" onclick="switchMenu('menuInvoices', this)">Penagihan</button>`;
+        html += `<button class="nav-btn" onclick="switchMenu('menuStores', this)">Daftar Toko</button>`;
+        html += `<button class="nav-btn" onclick="switchMenu('menuDiscounts', this)">Program Diskon</button>`;
+        container.innerHTML = html;
+    }
+
+    function switchMenu(menuId, btn) {
+        document.querySelectorAll('.menu-content').forEach(el => el.classList.add('hidden'));
+        document.getElementById(menuId).classList.remove('hidden');
+        document.querySelectorAll('.nav-btn').forEach(el => el.classList.remove('active'));
+        btn.classList.add('active');
+
+        if (menuId === 'menuStock') loadStock();
+        if (menuId === 'menuInvoices') loadInvoices();
+        if (menuId === 'menuStores') loadStores();
+        if (menuId === 'menuDiscounts') loadDiscounts();
+    }
+
+    async function loadAppData() {
+        try {
+            const res = await fetch('http://127.0.0.1:5000/api/stock');
+            const data = await res.json();
+            if (data.success) {
+                productsData = data.stock;
+                let select = document.getElementById('orderProduct');
+                select.innerHTML = '';
+                productsData.forEach(p => {
+                    let opt = document.createElement('option');
+                    opt.value = p.name;
+                    opt.text = `${p.name} | Rp ${p.price.toLocaleString()} / ${p.unit} | Stok: ${p.stock}`;
+                    select.appendChild(opt);
+                });
+                updateSubtotal();
+            }
+        } catch (e) {}
+
+        try {
+            const res = await fetch('http://127.0.0.1:5000/api/stores');
+            const data = await res.json();
+            if (data.success) {
+                let select = document.getElementById('orderStore');
+                select.innerHTML = '';
+                data.stores.forEach(s => {
+                    let opt = document.createElement('option');
+                    opt.value = s.name;
+                    opt.text = `${s.name} (${s.area})`;
+                    select.appendChild(opt);
+                });
+            }
+        } catch (e) {}
+    }
+
+    function updateSubtotal() {
+        const productName = document.getElementById('orderProduct').value;
+        const qty = parseInt(document.getElementById('orderQty').value) || 1;
+        const product = productsData.find(p => p.name === productName);
+        
+        if (product) {
+            let total = product.price * qty;
+            document.getElementById('priceInfo').innerText = `Satuan: ${product.unit} | Harga Satuan: Rp ${product.price.toLocaleString()} | Estimasi Total: Rp ${total.toLocaleString()}`;
+        }
+    }
+
+    async function loadStock() {
+        try {
+            const res = await fetch('http://127.0.0.1:5000/api/stock');
+            const data = await res.json();
+            if (data.success) {
+                let html = `<table><tr><th>Produk</th><th>Satuan</th><th>Harga</th><th style="text-align:center;">Stok</th></tr>`;
+                data.stock.forEach(p => {
+                    html += `<tr><td>${p.name}</td><td>${p.unit}</td><td>Rp ${p.price.toLocaleString()}</td><td style="text-align:center; font-weight:bold; color:${p.stock<10?'red':'green'}">${p.stock}</td></tr>`;
+                });
+                html += `</table>`;
+                document.getElementById('stockTableDiv').innerHTML = html;
+            }
+        } catch (e) { document.getElementById('stockTableDiv').innerText = "Gagal memuat stok."; }
+    }
+
+    async function loadInvoices() {
+        try {
+            const res = await fetch('http://127.0.0.1:5000/api/invoices');
+            const data = await res.json();
+            if (data.success) {
+                if (data.invoices.length === 0) {
+                    document.getElementById('invoicesTableDiv').innerHTML = "<p style='text-align:center; color:green;'>🎉 Semua tagihan lunas!</p>";
+                    return;
+                }
+                let html = `<table><tr><th>Toko & ID</th><th>Produk</th><th>Aksi</th></tr>`;
+                data.invoices.forEach(inv => {
+                    html += `<tr><td><b>${inv.storeName}</b><br><small>${inv.id}</small></td><td>${inv.productName} (${inv.qty} Dus)</td><td><button style="padding:4px; background:green; font-size:11px; margin:0;" onclick="payInvoice('${inv.id}')">Lunasi</button></td></tr>`;
+                });
+                html += `</table>`;
+                document.getElementById('invoicesTableDiv').innerHTML = html;
+            }
+        } catch (e) { document.getElementById('invoicesTableDiv').innerText = "Gagal memuat penagihan."; }
+    }
+
+    async function loadStores() {
+        try {
+            const res = await fetch('http://127.0.0.1:5000/api/stores');
+            const data = await res.json();
+            if (data.success) {
+                let html = `<table><tr><th>Nama Toko</th><th>Pemilik</th><th>NIK</th><th>No HP</th><th>NPWP</th><th>Wilayah</th></tr>`;
+                data.stores.forEach(s => {
+                    html += `<tr>
+                        <td><b>${s.name}</b></td>
+                        <td>${s.owner || '-'}</td>
+                        <td>${s.nik || '-'}</td>
+                        <td>${s.phone || '-'}</td>
+                        <td>${s.npwp || '-'}</td>
+                        <td>${s.area}</td>
+                    </tr>`;
+                });
+                html += `</table>`;
+                document.getElementById('storesTableDiv').innerHTML = html;
+            }
+        } catch (e) { document.getElementById('storesTableDiv').innerText = "Gagal memuat toko."; }
+    }
+
+    async function loadDiscounts() {
+        try {
+            const res = await fetch('http://127.0.0.1:5000/api/discounts');
+            const data = await res.json();
+            if (data.success) {
+                let html = `<table><tr><th>Nama Promo</th><th>Ketentuan</th><th>Diskon</th></tr>`;
+                data.discounts.forEach(d => {
+                    html += `<tr><td><b>${d.promoName}</b></td><td>Min. ${d.minQty} Dus</td><td>Rp ${d.discountRp.toLocaleString()}</td></tr>`;
+                });
+                html += `</table>`;
+                document.getElementById('discountsTableDiv').innerHTML = html;
+            }
+        } catch (e) { document.getElementById('discountsTableDiv').innerText = "Gagal memuat diskon."; }
+    }
+
+    async function addNewStore() {
+        const name = document.getElementById('newStoreName').value;
+        const owner = document.getElementById('newStoreOwner').value;
+        const nik = document.getElementById('newStoreNik').value;
+        const phone = document.getElementById('newStorePhone').value;
+        const npwp = document.getElementById('newStoreNpwp').value;
+        const area = document.getElementById('newStoreArea').value;
+        
+        if (!name) { alert("Nama toko harus diisi!"); return; }
+
+        try {
+            const res = await fetch('http://127.0.0.1:5000/api/add-store', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ id: 'S-' + Date.now(), name, owner, nik, phone, npwp, area })
+            });
+            const result = await res.json();
+            if (result.success) {
+                alert(result.message);
+                document.getElementById('newStoreName').value = '';
+                document.getElementById('newStoreOwner').value = '';
+                document.getElementById('newStoreNik').value = '';
+                document.getElementById('newStorePhone').value = '';
+                document.getElementById('newStoreNpwp').value = '';
+                document.getElementById('newStoreArea').value = '';
+                loadStores();
+                loadAppData();
+            }
+        } catch (e) { alert("Gagal menambah toko."); }
+    }
+
+    async function submitOrder(shouldPrint) {
+        const storeName = document.getElementById('orderStore').value;
+        const gps = document.getElementById('gpsCoord').value;
+        const productName = document.getElementById('orderProduct').value;
+        const qty = parseInt(document.getElementById('orderQty').value) || 1;
+        const paymentType = document.getElementById('orderPayment').value;
+        const statusDiv = document.getElementById('orderStatus');
+
+        const product = productsData.find(p => p.name === productName);
+        const totalPrice = product ? product.price * qty : 0;
+
+        const tx = {
+            id: 'TRX-' + Date.now(),
+            storeName,
+            gps: gps || 'Tidak ada GPS',
+            photo: capturedPhotoBase64 || null,
+            productName,
+            qty,
+            totalPrice,
+            paymentType,
+            status: paymentType === 'TEMPO_7_HARI' ? 'PENDING_APPROVAL' : 'PAID',
+            timestamp: new Date().toLocaleString()
+        };
+
+        try {
+            const res = await fetch('http://127.0.0.1:5000/api/transactions', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(tx)
+            });
+            const result = await res.json();
+            if (result.success) {
+                statusDiv.style.color = "green";
+                statusDiv.innerText = "✅ " + result.message;
+                loadAppData();
+
+                if (shouldPrint) {
+                    printThermalReceipt(tx);
+                }
+            } else {
+                statusDiv.style.color = "red";
+                statusDiv.innerText = "❌ " + result.error;
+            }
+        } catch (e) {
+            statusDiv.style.color = "red";
+            statusDiv.innerText = "Gagal mengirim pesanan.";
+        }
+    }
+
+    function printThermalReceipt(tx) {
+        const printArea = document.getElementById('printArea');
+        printArea.innerHTML = `
+            <div style="text-align: center; font-weight: bold;">DISTRIBUTOR KANVAS ARGAMAKMUR</div>
+            <div style="text-align: center; font-size: 10px;">Nota Penjualan / Sales TO Kanvas</div>
+            <div style="border-bottom: 1px dashed black; margin: 5px 0;"></div>
+            <div>No Nota : ${tx.id}</div>
+            <div>Tanggal : ${tx.timestamp}</div>
+            <div>Toko    : ${tx.storeName}</div>
+            <div>GPS     : ${tx.gps}</div>
+            <div style="border-bottom: 1px dashed black; margin: 5px 0;"></div>
+            <div><b>${tx.productName}</b></div>
+            <div>${tx.qty} Dus x Rp ${(tx.totalPrice / tx.qty).toLocaleString()}</div>
+            <div style="text-align: right; font-weight: bold;">TOTAL: Rp ${tx.totalPrice.toLocaleString()}</div>
+            <div style="border-bottom: 1px dashed black; margin: 5px 0;"></div>
+            <div style="text-align: center;">Status: <b>${tx.paymentType}</b></div>
+            <div style="text-align: center; margin-top: 10px; font-size: 10px;">Terima Kasih Atas Kerjasamanya</div>
+        `;
+        window.print();
+    }
+
+    async function payInvoice(id) {
+        if (!confirm(`Lunasi tagihan ${id}?`)) return;
+        try {
+            const res = await fetch('http://127.0.0.1:5000/api/pay-invoice', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ id })
+            });
+            const result = await res.json();
+            if (result.success) {
+                alert(result.message);
+                loadInvoices();
+            }
+        } catch (e) { alert("Gagal melunasi."); }
+    }
+
+    async function handleLogout() { location.reload(); }
+</script>
+
+</body>
+</html>

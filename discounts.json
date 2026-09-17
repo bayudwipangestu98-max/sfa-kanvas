@@ -1,0 +1,9 @@
+[
+  {
+    "id": "D01",
+    "promoName": "Promo Merdeka Kanvas",
+    "minQty": 5,
+    "discountRp": 2000,
+    "description": "Potongan Rp 2.000/dus jika beli >= 5 dus"
+  }
+]
