@@ -1,59 +1,36 @@
-const http = require('http');
-const fs = require('fs');
+const express = require('express');
 const path = require('path');
+const app = express();
 
-const server = http.createServer((req, res) => {
-  // Rute untuk file index.html
-  if (req.url === '/' || req.url === '/index.html') {
-    const filePath = path.join(__dirname, 'index.html');
-    fs.readFile(filePath, (err, data) => {
-      if (err) {
-        res.writeHead(500, { 'Content-Type': 'text/plain' });
-        res.end('Server Error');
-      } else {
-        res.writeHead(200, { 'Content-Type': 'text/html' });
-        res.end(data);
-      }
-    });
-    return;
-  }
+// Middleware untuk membaca format JSON
+app.use(express.json());
 
-  // Rute untuk manifest.json
-  if (req.url === '/manifest.json') {
-    const manifestPath = path.join(__dirname, 'manifest.json');
-    fs.readFile(manifestPath, (err, data) => {
-      if (err) {
-        res.writeHead(404);
-        res.end();
-      } else {
-        res.writeHead(200, { 'Content-Type': 'application/json' });
-        res.end(data);
-      }
-    });
-    return;
-  }
+// Menyajikan file statis (index.html) dari folder yang sama
+app.use(express.static(__dirname));
 
-  // Rute untuk logo ikon aplikasi (Mobil Box SFA)
-  if (req.url === '/logo.png') {
-    const logoPath = path.join(__dirname, 'logo.png');
-    fs.readFile(logoPath, (err, data) => {
-      if (err) {
-        res.writeHead(404);
-        res.end();
-      } else {
-        res.writeHead(200, { 'Content-Type': 'image/png' });
-        res.end(data);
-      }
-    });
-    return;
-  }
+// Endpoint Login SFA Kanvas
+app.post('/api/login', (req, res) => {
+    const { username, pin } = req.body;
 
-  // Rute default jika file lain tidak ditemukan
-  res.writeHead(404, { 'Content-Type': 'text/plain' });
-  res.end('Not Found');
+    // Contoh data akun login sementara
+    if ((username === 'admin' && pin === 'admin123') || (username === 'sales01' && pin === '1234')) {
+        res.json({
+            success: true,
+            role: username === 'admin' ? 'admin' : 'sales',
+            message: 'Login berhasil'
+        });
+    } else {
+        res.status(401).json({
+            success: false,
+            message: 'Username atau PIN salah.'
+        });
+    }
 });
 
-const PORT = 5000;
-server.listen(PORT, '0.0.0.0', () => {
-    console.log(`🚀 Server SFA aktif di http://localhost:${PORT}`);
+// Menggunakan Port dari Railway atau port 5000 secara otomatis
+const PORT = process.env.PORT || 5000;
+
+// Wajib menggunakan '0.0.0.0' agar bisa diakses dari internet/Railway
+app.listen(PORT, '0.0.0.0', () => {
+    console.log(`Server SFA aktif dan berjalan di port ${PORT}`);
 });
