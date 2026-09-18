@@ -12,7 +12,7 @@ app.use(express.static(__dirname));
 app.post('/api/login', (req, res) => {
     const { username, pin } = req.body;
 
-    // Contoh data akun login sementara
+    // Data akun login sementara
     if ((username === 'admin' && pin === 'admin123') || (username === 'sales01' && pin === '1234')) {
         res.json({
             success: true,
@@ -30,7 +30,7 @@ app.post('/api/login', (req, res) => {
 // Menggunakan Port dari Railway atau port 5000 secara otomatis
 const PORT = process.env.PORT || 5000;
 
-// Wajib menggunakan '0.0.0.0' agar bisa diakses dari internet/Railway
+// WAJIB menggunakan '0.0.0.0' agar bisa diakses secara online oleh Railway
 app.listen(PORT, '0.0.0.0', () => {
     console.log(`Server SFA aktif dan berjalan di port ${PORT}`);
 });
